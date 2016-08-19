@@ -38,6 +38,12 @@ def read_subsat2():
     df = df['starname tel t mnvel errvel'.split()]
     df = df.rename(columns={'t':'time'})
     dfall = pd.concat([dfall,df],ignore_index=True)
+
+    dfall = dfall[dfall.starname.isin('K2-27 K2-32 K2-39'.split())]
+    dfall = dfall.sort_values(by=['starname','tel'])
+
+    # Categorical specifies the order in which we'll sort these data
+    dfall['tel'] = pd.Categorical(dfall['tel'],'hires harps pfs fies'.split())
     return dfall
 
 def read_dai():
