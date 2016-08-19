@@ -18,8 +18,8 @@ params['gamma_pfs'] = 1.0
 params['jit_pfs'] = 0     
 
 vary = dict(
-    dvdt = True,
-    curv = True,
+    dvdt = False,
+    curv = False,
     secosw1 = False,
     sesinw1 = False,
     secosw2 = False,

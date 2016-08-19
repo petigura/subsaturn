@@ -8,7 +8,7 @@ import cpsutils.io
 
 # Define global planetary system and dataset parameters
 nplanets= 1
-instnames = ['j','harps-n','harps'] 
+instnames = ['hires','harps-n','harps'] 
 ntels = len(instnames) 
 fitting_basis = 'per tc secosw sesinw k'
 bjd0 = 2454833.
@@ -17,26 +17,16 @@ planet_letters = {1: 'b'}
 
 
 # Load radial velocity data, in this example the data is contained in an ASCII file, must have 'time', 'mnvel', 'errvel', and 'tel' keys
-df = cpsutils.io.load_vst(starname)
-df = df[['jd','mnvel','errvel']]
-df.columns.values[df.columns.values=='jd'] = 'time'
-df['tel']='j'
-
-import subsaturn.literature
-lit = subsaturn.literature.read_lit()
-lit = lit.rename(columns={'t':'time'})
-lit = lit.query('starname=="K2-27"')
-lit.index = lit.tel
-lit['meanmnvel'] = lit.groupby('tel')['mnvel'].mean()
-lit['mnvel'] -= lit['meanmnvel']
-
-df = pd.concat([df,lit])
+import subsaturn.rv
+data = subsaturn.rv.read_subsat2()
+print data
+instnames = ['hires','harps','harps-n']
+data = data[(data.starname=='K2-27') & data.tel.isin(instnames)]
 
 
-
-data = df
-
-
+data.index=data.tel
+data['meanmnvel'] = data.groupby('tel')['mnvel'].mean()
+data['mnvel'] -= data['meanmnvel']
 
 # Define prior centers (initial guesses) here.
 params = radvel.RVParameters(nplanets,basis='per tc e w k') 
@@ -53,6 +43,8 @@ params['gamma_harps-n'] = 1.0      # "                   "   hires_rj
 params['jit_harps-n'] = 2.6        # "      "   hires_rj
 params['gamma_harps'] = 2.6        # "      "   hires_rj
 params['jit_harps'] = 2.6        # "      "   hires_rj
+params['gamma_hires'] = 2.6        # "      "   hires_rj
+params['jit_hires'] = 2.6        # "      "   hires_rj
 
 
 time_base = np.mean([np.min(data.time), np.max(data.time)])   # abscissa for slope and curvature terms (should be near mid-point of time baseline)
