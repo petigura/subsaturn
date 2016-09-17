@@ -13,17 +13,17 @@ LITDIR = os.path.join(
 
 def read_subsat2():
     dfall = []
-    df = cpsutils.io.load_vst('epic205071984')
+    df = cpsutils.io.load_vst('epic205071984',verbose=False)
     df['tel'] = 'hires'
     df['starname'] = 'K2-32'
     dfall.append(df)
 
-    df = cpsutils.io.load_vst('epic206247743')
+    df = cpsutils.io.load_vst('epic206247743',verbose=False)
     df['tel'] = 'hires'
     df['starname'] = 'K2-39'
     dfall.append(df)
 
-    df = cpsutils.io.load_vst('epic201546283')
+    df = cpsutils.io.load_vst('epic201546283',verbose=False)
     df['tel'] = 'hires'
     df['starname'] = 'K2-27'
     dfall.append(df)

@@ -22,14 +22,16 @@ def radvel_fit(star):
     with open(radvel_file,'w') as f:
         f.writelines(s)
 
-    cmd = "python {}/Research/radvel/bin/kepfit.py --outputdir={} {}".format(
-        HOME, RADVEL_OUTPUT_DIR, radvel_file
-    )
+    cmd = "radvel fit -d {} -s {}".format(RADVEL_OUTPUT_DIR, radvel_file)
+    print cmd
     os.system(cmd)
+    cmd = "radvel mcmc -d {} -s {}".format(RADVEL_OUTPUT_DIR, radvel_file)
+    print cmd
+    os.system(cmd)
+
     cmd = "cp {}/{}/{}_rv_multipanel.pdf {}/fig_{}_rv_multipanel.pdf".format(
         RADVEL_OUTPUT_DIR, star, star, TEXDIR, star
     )
-    os.system(cmd)
 
 def radvel_table(star):
     csvfn = "{}/{}/{}_post_summary.csv".format(RADVEL_OUTPUT_DIR, star, star)
@@ -62,7 +64,7 @@ def rv_table():
         for i, row in rv.iterrows():
             s = (
                 r"{starname:s} & {tel:s} & {time:.6f} & ".format(**row)
-                + r"{mnvel:.2f} & {errvel:.2f} \\".format(**row)
+                +r"{mnvel:.2f} & {errvel:.2f} \\".format(**row)
             )
             s += "\n"
             f.write(s)
