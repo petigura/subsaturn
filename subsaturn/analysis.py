@@ -13,47 +13,6 @@ STARS="3167 ck00367 ck00094 epic201505350 epic205071984 epic203771098 epic206245
 
 HOME = os.environ['HOME']
 
-def radvel_fit(star):
-    radvel_file = "{}/{}.py".format(RADVEL_SETUP_DIR,star)
-    env = Environment(loader=PackageLoader('subsaturn', 'templates'))
-    template = env.get_template("{}.py".format(star))
-    
-    s = template.render()
-    with open(radvel_file,'w') as f:
-        f.writelines(s)
-
-    cmd = "radvel fit -d {} -s {}".format(RADVEL_OUTPUT_DIR, radvel_file)
-    print cmd
-    os.system(cmd)
-    cmd = "radvel mcmc -d {} -s {}".format(RADVEL_OUTPUT_DIR, radvel_file)
-    print cmd
-    os.system(cmd)
-
-    cmd = "cp {}/{}/{}_rv_multipanel.pdf {}/fig_{}_rv_multipanel.pdf".format(
-        RADVEL_OUTPUT_DIR, star, star, TEXDIR, star
-    )
-
-def radvel_table(star):
-    csvfn = "{}/{}/{}_post_summary.csv".format(RADVEL_OUTPUT_DIR, star, star)
-    tablefn = "{}/{}_table.tex".format(TEXDIR,star)
-    df = pd.read_csv(csvfn)
-    df = df.T
-    df['med'] = df[1]
-    df['err'] = 0.5 *(df[2] - df[0])
-    with open(tablefn, 'w') as f:
-        index_str = " ".join(list(df.index))
-        num_planets = index_str.count('mpsini')
-        for i in range(1, num_planets+1):
-            for key in 'k rp mpsini rhop'.split():
-                label = key+str(i)
-                row = df.ix[label]
-                s = r"{} & {:.2f} $\pm$ {:.2f} \\".format(
-                    label, row.med, row.err
-                )
-                s += "\n"
-                print s
-                f.write(s)
-
 
 def rv_table():
     rv = subsaturn.rv.read_subsat2()
@@ -68,7 +27,6 @@ def rv_table():
             )
             s += "\n"
             f.write(s)
-
 
 def main():
     psr = ArgumentParser()
