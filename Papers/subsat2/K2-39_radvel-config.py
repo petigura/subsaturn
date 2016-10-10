@@ -10,12 +10,12 @@ import subsaturn.literature
 
 # Define global planetary system and dataset parameters
 starname = 'epic206247743'
-nplanets = 3    # number of planets in the system
 instnames = ['hires','harps','pfs','fies']    # list of instrument names. Can be whatever you like but should match 'tel' column in the input file.
 ntels = len(instnames)       # number of instruments with unique velocity zero-points
 fitting_basis = 'per tc secosw sesinw k' # Fitting basis, see radvel.basis.BASIS_NAMES for available basis names
 bjd0 = 2454833.
 planet_letters = {1: 'b', 2:'c'}
+nplanets = len(planet_letters.keys())
 
 # Define prior centers (initial guesses) here.
 params = radvel.RVParameters(nplanets,basis='per tc e w k') # initialize RVparameters object
@@ -25,16 +25,11 @@ params['tc1'] = 2152.43155 + bjd0
 params['e1'] = 0.0 
 params['w1'] = np.pi/2. 
 params['k1'] = 8.0 
-params['per2'] = 19.0 
-params['tc2'] = 2082.62516 + bjd0 # Some arbitrary starting value
+params['per2'] = 330.0
+params['tc2'] = 2082.62516 + bjd0 #  Some arbitrary starting value
 params['e2'] = 0.0
 params['w2'] = np.pi/2.
 params['k2'] = 10.0
-params['per3'] = 160.0
-params['tc3'] = 2082.62516 + bjd0 #  Some arbitrary starting value
-params['e3'] = 0.0
-params['w3'] = np.pi/2.
-params['k3'] = 10.0
 params['dvdt'] = 0.0 # slope
 params['curv'] = 0.0 # curvature
 params['gamma_hires'] = -5.0 # Entered in by hand from some prelimary fits

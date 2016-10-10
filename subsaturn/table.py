@@ -4,6 +4,8 @@ import radvel
 import numpy as np
 import re
 from isochrones import StarModel
+from astropy import units as u 
+from astropy import constants as c
 
 def fmt_chain(df):
     quant = df.quantile([0.14,0.50,0.86])
@@ -72,13 +74,25 @@ def augment_chain(chain, isochrones_file, lpar_list):
 
         Mpsini = radvel.orbit.Msini(k, P, chain['mass'], e, Msini_units='earth')
         rhop = radvel.orbit.density(Mpsini,Rp)
+
         
+        Lstar = radvel.orbit.Lstar(chain['radius'],chain['Teff'])
+        a = ((c.G * 1.0 * u.Msun * (P * u.d)**2 / 4 / np.pi**2)**(1/3.)).to(u.AU)
+        a = a.to(u.AU).value
+        Sinc = radvel.orbit.Sinc(Lstar, a)
+        Teq = radvel.orbit.Teq(Sinc)
+
         chain['P%i' % i_planet] = P
         chain['T0%i' % i_planet] = T0
         chain['RpRstar%i' % i_planet] = RpRstar
         chain['Rp%i' % i_planet] = Rp
         chain['Mpsini%i' % i_planet] = Mpsini
         chain['rhop%i' % i_planet] = rhop
+
+        chain['Teq%i' % i_planet] = Teq
+        chain['Lstar%i' % i_planet] = Lstar
+        chain['a%i' % i_planet] = a
+        chain['Sinc%i' % i_planet] = Sinc
         i_planet +=1
 
     print_fmt_chain(fmt_chain(chain))
