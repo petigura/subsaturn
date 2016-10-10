@@ -5,9 +5,7 @@ import pandas as pd
 import numpy as np
 import radvel
 import pdb
-from cpsutils import io
-from Evan_test import mkobsdb_keck
-from Evan_test import KECKVSTDIR
+import cpsutils.io
 
 # Define global planetary system and dataset parameters
 starname = 'epic211945201'
@@ -42,19 +40,12 @@ params['jit_j'] = 2.6        # "      "   hires_rj
 
 
 # Load radial velocity data, in this example the data is contained in an ASCII file, must have 'time', 'mnvel', 'errvel', and 'tel' keys
-vstfile = KECKVSTDIR + '/vst' + starname + '.dat'
-df = io.read_vst(vstfile)
+df = cpsutils.io.load_vst(starname)
 df = df[['jd','mnvel','errvel']]
 df.columns.values[df.columns.values=='jd'] = 'time'
 df['tel']='j'
 
-datadir = os.path.join(radvel.ROOTDIR + 'data/')
-if not os.path.isdir(datadir):
-    os.mkdir(datadir)
-
-datafile =  datadir + '/' + starname + '.txt'
-df.to_csv(datafile, sep=',')
-data = pd.read_csv(datafile)
+data = df
 
 # Set parameters to be held constant (default is for all parameters to vary). Must be defined in the fitting basis
 vary = dict(
@@ -65,10 +56,6 @@ vary = dict(
     tc1 = False,
     secosw1 = False,
     sesinw1 = False
-#    per2 = True,
-#    tc2  = True,
-#    secosw2 = False,
-#    sesinw2 = False
 )
 
 
@@ -77,8 +64,6 @@ priors = [
     radvel.prior.EccentricityPrior( nplanets ),           # Keeps eccentricity < 1
     radvel.prior.Gaussian('tc1', params['tc1'], 0.01), # Gaussian prior on tc1 with center at tc1 and width 0.01 days
     radvel.prior.Gaussian('per1', params['per1'], 0.01),
-#    radvel.prior.Gaussian('tc2', params['tc2'], 3.0) # Gaussian prior on tc1 with center at tc1 and width 0.01 days
-# radvel.prior.Gaussian('per2', params['per2'], )
 ]
 
 

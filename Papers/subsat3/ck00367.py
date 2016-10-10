@@ -5,9 +5,7 @@ import pandas as pd
 import numpy as np
 import radvel
 import pdb
-from cpsutils import io
-from Evan_test import mkobsdb_keck
-from Evan_test import KECKVSTDIR
+import cpsutils.io
 
 # Define global planetary system and dataset parameters
 starname = 'ck00367'
@@ -26,29 +24,17 @@ params['tc1'] = 2454978.62700   # time of inferior conjunction of 1st planet
 params['e1'] = 0.0          # eccentricity of 'per tc secosw sesinw logk'1st planet
 params['w1'] = np.pi/2.      # argument of periastron of the star's orbit for 1st planet
 params['k1'] = 3.0         # velocity semi-amplitude for 1st planet
-
 params['dvdt'] = 0.0         # slope
 params['curv'] = 0.0         # curvature
-
 params['gamma_j'] = 1.0      # "                   "   hires_rj
-
 params['jit_j'] = 2.6        # "      "   hires_rj
 
-
 # Load radial velocity data, in this example the data is contained in an ASCII file, must have 'time', 'mnvel', 'errvel', and 'tel' keys
-vstfile = KECKVSTDIR + '/vst' + starname + '.dat'
-df = io.read_vst(vstfile)
+df = cpsutils.io.load_vst(starname)
 df = df[['jd','mnvel','errvel']]
 df.columns.values[df.columns.values=='jd'] = 'time'
 df['tel']='j'
-
-datadir = os.path.join(radvel.ROOTDIR + 'data/')
-if not os.path.isdir(datadir):
-    os.mkdir(datadir)
-
-datafile =  datadir + '/' + starname + '.txt'
-df.to_csv(datafile, sep=',')
-data = pd.read_csv(datafile)
+data = df
 
 # Set parameters to be held constant (default is for all parameters to vary). Must be defined in the fitting basis
 vary = dict(
@@ -60,7 +46,6 @@ vary = dict(
     secosw1 = False,
     sesinw1 = False
 )
-
 
 # Define prior shapes and widths here.
 priors = [
