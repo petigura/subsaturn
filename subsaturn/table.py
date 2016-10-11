@@ -77,8 +77,9 @@ def augment_chain(chain, isochrones_file, lpar_list):
 
         
         Lstar = radvel.orbit.Lstar(chain['radius'],chain['Teff'])
-        a = ((c.G * 1.0 * u.Msun * (P * u.d)**2 / 4 / np.pi**2)**(1/3.)).to(u.AU)
+        a = ((c.G * chain['mass'] * u.Msun * (P * u.d)**2 / 4 / np.pi**2)**(1/3.)).to(u.AU)
         a = a.to(u.AU).value
+        print a
         Sinc = radvel.orbit.Sinc(Lstar, a)
         Teq = radvel.orbit.Teq(Sinc)
 
