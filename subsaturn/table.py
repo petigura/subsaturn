@@ -50,7 +50,7 @@ def augment_chain(chain, isochrones_file, lpar_list):
     chain_star = model.samples
     chain_star['agegyr'] = 10**chain_star['age'] / 1e9
     chain_star = chain_star['Teff mass radius agegyr'.split()]
-
+    chain_star['rhostar'] = 1.410 * chain_star.mass * chain_star.radius**-3
     nchain = len(chain)
     chain_star = chain_star.sample(n=nchain,replace=True)
     chain_star.index = chain.index
@@ -79,7 +79,6 @@ def augment_chain(chain, isochrones_file, lpar_list):
         Lstar = radvel.orbit.Lstar(chain['radius'],chain['Teff'])
         a = ((c.G * chain['mass'] * u.Msun * (P * u.d)**2 / 4 / np.pi**2)**(1/3.)).to(u.AU)
         a = a.to(u.AU).value
-        print a
         Sinc = radvel.orbit.Sinc(Lstar, a)
         Teq = radvel.orbit.Teq(Sinc)
 
