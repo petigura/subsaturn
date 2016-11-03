@@ -12,7 +12,11 @@ def err_errorbar(df, key):
     val = df[key]
     valerr = np.vstack([-1.0*df[key+'err2'],df[key+'err1']])
     return val, valerr
-    
+
+def read_ss():
+    ss = pd.read_excel(subsaturn.lopez.sscmffn,index_col=0)
+    return ss 
+
 
 def plot_rhop_rp(df, fig0=None, ax0=None, offsets=None, ann_kw={}, scat_kw={}):
     """Plot planet density againts planet radius
@@ -117,7 +121,7 @@ def subsat2_rp_rhop(label_all=False):
     fig,ax = plot_rhop_rp(
         ss_lit,ann_kw=dict(fontsize=all_fontsize),scat_kw=dict(s=100)
     )
-    ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    ax.legend(bbox_to_anchor=(1.03, 1), loc=2, borderaxespad=0.)
 
     plot_rhop_rp(
         ss_thiswork,fig0=fig,ax0=ax,
@@ -126,17 +130,13 @@ def subsat2_rp_rhop(label_all=False):
     )
 
 
-
-
-
-
 tex_cmf = '$M_{\mathregular{core}}$ /$M_{\mathregular{P}}$'
 tex_mcore = '$M_{\mathregular{core}}$ (Earth-masses)'
 tex_menv = '$M_{\mathregular{env}}$ (Earth-masses)'
 tex_mp = '$M_{\mathregular{P}}$ (Earth-masses)'
 
 def subsat2_teq_cmf():
-    ss = pd.read_excel(subsaturn.lopez.sscmffn)
+    ss = read_ss()
     x, xerr = err_errorbar(ss, 'pl_teq')
     y, yerr = err_errorbar(ss, 'pl_cmf')
     errorbar(x, y, xerr=xerr, yerr=yerr, fmt='.')    
@@ -145,7 +145,7 @@ def subsat2_teq_cmf():
     ylim(0,1)
 
 def subsat2_pnum_cmf():
-    ss = pd.read_excel(subsaturn.lopez.sscmffn)
+    ss = read_ss()
     x = ss.pl_pnum
     x += linspace(-0.1,0.1,len(x))
     y, yerr = err_errorbar(ss, 'pl_cmf')
@@ -156,7 +156,7 @@ def subsat2_pnum_cmf():
     xlim(0,7)
 
 def subsat2_pnum_mcore():
-    ss = pd.read_excel(subsaturn.lopez.sscmffn)
+    ss = read_ss()
     x = ss.pl_pnum
     x += linspace(-0.1,0.1,len(x))
     y, yerr = err_errorbar(ss, 'pl_mcore')
@@ -169,7 +169,7 @@ def subsat2_pnum_mcore():
     yticks(yt,yt)
 
 def subsat2_pnum_menv():
-    ss = pd.read_excel(subsaturn.lopez.sscmffn)
+    ss = read_ss()
     x = ss.pl_pnum
     x += linspace(-0.1,0.1,len(x))
     y, yerr = err_errorbar(ss, 'pl_menv')
@@ -182,7 +182,7 @@ def subsat2_pnum_menv():
     yticks(yt,yt)
 
 def subsat2_pnum_mp():
-    ss = pd.read_excel(subsaturn.lopez.sscmffn)
+    ss = read_ss()
     x = ss.pl_pnum
     x += linspace(-0.1,0.1,len(x))
     y, yerr = err_errorbar(ss, 'pl_masse')
@@ -195,7 +195,9 @@ def subsat2_pnum_mp():
     yticks(yt,yt)
 
 def subsat2_st_metfe_pl_masse():
-    ss = pd.read_excel(subsaturn.lopez.sscmffn)
+    ss = read_ss()
+    ss = ss.drop('Kepler-413 b')
+
     x, xerr = err_errorbar(ss, 'st_metfe')
     y, yerr = err_errorbar(ss, 'pl_masse')
     semilogy()
@@ -204,9 +206,11 @@ def subsat2_st_metfe_pl_masse():
     ylabel(tex_mp)
     yt = [1,3,10,30,100]
     yticks(yt,yt)
+    xlim(-0.3,0.5)
 
 def subsat2_st_metfe_pl_mcore():
-    ss = pd.read_excel(subsaturn.lopez.sscmffn)
+    ss = read_ss()
+    ss = ss.drop('Kepler-413 b')
     x, xerr = err_errorbar(ss, 'st_metfe')
     y, yerr = err_errorbar(ss, 'pl_mcore')
     semilogy()
@@ -215,9 +219,11 @@ def subsat2_st_metfe_pl_mcore():
     ylabel(tex_mcore)
     yt = [1,3,10,30,100]
     yticks(yt,yt)
+    xlim(-0.3,0.5)
 
 def subsat2_st_metfe_pl_menv():
-    ss = pd.read_excel(subsaturn.lopez.sscmffn)
+    ss = read_ss()
+    ss = ss.drop('Kepler-413 b')
     x, xerr = err_errorbar(ss, 'st_metfe')
     y, yerr = err_errorbar(ss, 'pl_menv')
     semilogy()
@@ -227,11 +233,15 @@ def subsat2_st_metfe_pl_menv():
     yt = [1,3,10,30,100]
     yticks(yt,yt)
 
-def subsat2_st_metfe_pl_menv():
-    ss = pd.read_excel(subsaturn.lopez.sscmffn)
+st_metfmlim = (-0.3,0.5)
+
+def subsat2_st_metfe_pl_cmf():
+    ss = read_ss()
+    ss = ss.drop('Kepler-413 b')
     x, xerr = err_errorbar(ss, 'st_metfe')
     y, yerr = err_errorbar(ss, 'pl_cmf')
     errorbar(x, y, yerr=yerr, fmt='.')    
     xlabel('[Fe/H]')
     ylabel(tex_cmf)
     ylim(0,1)
+    xlim(*st_metfmlim)
