@@ -7,7 +7,7 @@ import radvel
 import pdb
 import cpsutils.io
 import subsaturn.literature
-
+import subsaturn.rv 
 # Define global planetary system and dataset parameters
 starname = 'epic206247743'
 instnames = ['hires','harps','pfs','fies']    # list of instrument names. Can be whatever you like but should match 'tel' column in the input file.
@@ -42,21 +42,26 @@ params['gamma_fies'] = -9.0 # Entered in by hand from some prelimary fits
 params['jit_fies'] = 5
 
 
-df = cpsutils.io.load_vst('epic206247743',verbose=False)
-df['tel'] = 'hires'
-df_lit = subsaturn.literature.read_lit()
-df_lit = df_lit.rename(columns={'t':'jd'})
-df_lit = df_lit[df_lit.starname=='K2-39']
+#df = cpsutils.io.load_vst('epic206247743',verbose=False)
+#df['tel'] = 'hires'
+df = subsaturn.rv.read_subsat2()
+df = df[df.starname=='K2-39'] 
 
-g = df_lit.groupby('tel')
-groupmn = g['mnvel'].mean()
-df_lit.index = df_lit.tel
-df_lit['telmn'] = groupmn
-df_lit['mnvel'] -= df_lit['telmn']
-df = df.append(df_lit)
-df = df[['jd','mnvel','errvel','tel']]
-df.columns.values[df.columns.values=='jd'] = 'time'
+#df_lit = df_lit.rename(columns={'t':'jd'})
+#df_lit = df_lit[df_lit.starname=='K2-39']
+
+#g = df_lit.groupby('tel')
+#groupmn = g['mnvel'].mean()
+#df_lit.index = df_lit.tel
+#df_lit['telmn'] = groupmn
+#df_lit['mnvel'] -= df_lit['telmn']
+#df = df.append(df_lit)
+#df = df[['jd','mnvel','errvel','tel']]
+#df.columns.values[df.columns.values=='jd'] = 'time'
 data = df
+
+idx =data[(data.tel=='hires')].time.idxmax()
+data = data.drop(idx)
 
 # Set parameters to be held constant (default is for all parameters to
 # vary). Must be defined in the fitting basis
