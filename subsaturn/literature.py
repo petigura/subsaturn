@@ -80,12 +80,15 @@ def load_ss(verbose=False):
     pl_orbeccen pl_orbeccenerr1 pl_orbeccenerr2 pl_orbeccenlim 
     pl_teq pl_teqerr1 pl_teqerr2
     pl_orbsmax 
-    PL_DEF_REFLINK pl_massmeth latex_notes notes include
+    PL_DEF_REFLINK pl_massmeth latex_notes notes 
+    include include_pl_orbeccen include_st_metfe
     """.lower().split()
     cut = cut[cut.include==1]
     return cut[col]
 
-def gauss_samp(val, valerr1, valerr2, size=10000):
+def gauss_samp(val, valerr1, valerr2, size=10000, seed=None):
+    if seed is not None:
+        np.random.seed(seed) # Included for deterministic code
     valerr = 0.5 * (valerr1 - valerr2)
     val = np.random.normal(loc=val,scale=valerr,size=size)
     return val
@@ -94,13 +97,24 @@ def add_cols(df):
     df2 = df.copy()
     df2['pl_dens'] = 0.0
     for i,row in df.iterrows():
-        pl_masse = gauss_samp(row.pl_masse, row.pl_masseerr1, row.pl_masseerr2)
-        pl_rade = gauss_samp(row.pl_rade, row.pl_radeerr1, row.pl_radeerr2)
-        st_mass = gauss_samp(row.st_mass, row.st_masserr1, row.st_masserr2)
-        st_rad = gauss_samp(row.st_rad, row.st_raderr1, row.st_raderr2)
-        st_teff = gauss_samp(row.st_teff, row.st_tefferr1, row.st_tefferr2)
+#        if row.pl_name=="K2-24 c": import pdb;pdb.set_trace()
+        pl_masse = gauss_samp(
+            row.pl_masse, row.pl_masseerr1, row.pl_masseerr2,seed=0
+        )
+        pl_rade = gauss_samp(
+            row.pl_rade, row.pl_radeerr1, row.pl_radeerr2,seed=1
+        )
+        st_mass = gauss_samp(
+            row.st_mass, row.st_masserr1, row.st_masserr2,seed=2
+        )
+        st_rad = gauss_samp(
+            row.st_rad, row.st_raderr1, row.st_raderr2, seed=3
+        )
+        st_teff = gauss_samp(
+            row.st_teff, row.st_tefferr1, row.st_tefferr2, seed=4
+        )
         pl_orbper = gauss_samp(
-            row.pl_orbper, 1e-6, -1e-6
+            row.pl_orbper, 1e-6, -1e-6, seed=5
         )
 
         Lstar = radvel.orbit.Lstar(st_rad, st_teff)
@@ -126,20 +140,38 @@ def set_quantiles(df, i, val, key):
 
 def df_to_rv_table(df, tablefn,):
     with open(tablefn, 'w') as f:
-        f.write('% name radius mass density \n')
+        f.write('% name radius mass density ecc teq cmf notes\n')
+        df.pl_name = df.pl_name.replace('EPIC-211736671 b','EPIC-2117 b')
         for i, row in df.iterrows():
-            s = (
-                r"{pl_name:s}"
-                +r" & {pl_pnum:.0f}"
-                +r" & {pl_rade:.2f}^{{ +{pl_radeerr1:.2f} }}_{{ {pl_radeerr2:.2f} }}"
-                +r" & {pl_masse:.2f}^{{ +{pl_masseerr1:.2f} }}_{{ {pl_masseerr2:.2f} }}"
-                +r" & {pl_dens:.2f}^{{ +{pl_denserr1:.2f} }}_{{ {pl_denserr2:.2f} }}"
-                +r" & {pl_teq:.0f}"
-                +r" & {latex_notes:s}"
-                +r"\\"
-            )
-            s = s.format(**row)
-            s += "\n"
-            print s
+            s = row_to_string(row)
             f.write(s)
 
+def row_to_string(row):
+    row['pl_cmfper'] = row['pl_cmf'] * 100 
+    row['pl_cmfpererr1'] = row['pl_cmferr1'] * 100 
+    row['pl_cmfpererr2'] = row['pl_cmferr2'] * 100 
+
+    s = r""
+    s+=r"{pl_name:s}"
+    s+=r" & {pl_pnum:.0f}"
+    s+=r" & {pl_rade:.2f}^{{ +{pl_radeerr1:.2f} }}_{{ {pl_radeerr2:.2f} }}"
+    s+=r" & {pl_masse:.1f}^{{ +{pl_masseerr1:.1f} }}_{{ {pl_masseerr2:.1f} }}"
+    s+=r" & {pl_dens:.2f}^{{ +{pl_denserr1:.2f} }}_{{ {pl_denserr2:.2f} }}"
+    if row.include_pl_orbeccen:
+        s+=r" & {pl_orbeccen:.4f}^{{ +{pl_orbeccenerr1:.4f} }}_{{ {pl_orbeccenerr2:.4f} }}"
+    else:
+        s+=r" & \nodata "
+    
+    s+=r" & {pl_teq:.0f}"
+    s+=r" & {pl_cmfper:.1f}^{{ +{pl_cmfpererr1:.1f} }}_{{ {pl_cmfpererr2:.1f} }}"
+    if row.include_st_metfe:
+        s+=r" & {st_metfe:.2f}"
+    else:
+        s+=r" & \nodata "
+    s+=r" & {latex_notes:s}"
+    s+=r"\\"
+    s = s.format(**row)
+    s = s.replace('nan','')
+    s += "\n"
+    return s
+    

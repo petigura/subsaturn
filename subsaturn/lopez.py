@@ -120,26 +120,35 @@ def sample_ss_cmf(lopi, plnt, sample_age=False, age=5, size=100):
             - menv
     """
     teq_earth = 279
-    masse = gauss_samp(plnt.pl_masse, plnt.pl_masseerr1, plnt.pl_masseerr2,size=size)
-    radius = gauss_samp(plnt.pl_rade, plnt.pl_radeerr1, plnt.pl_radeerr2,size=size)
-    teq = gauss_samp(plnt.pl_teq, plnt.pl_teqerr1, plnt.pl_teqerr2,size=size)
+    masse = gauss_samp(
+        plnt.pl_masse, plnt.pl_masseerr1, plnt.pl_masseerr2, size=size
+    )
+    radius = gauss_samp(
+        plnt.pl_rade, plnt.pl_radeerr1, plnt.pl_radeerr2,size=size
+    )
+    teq = gauss_samp(
+        plnt.pl_teq, plnt.pl_teqerr1, plnt.pl_teqerr2,size=size
+    )
     age = np.ones(size) * age
     flux = (teq / teq_earth)**4.0
 
     df = []
     for i in range(size):
         try:
-            cmf = lopi.core_mass_fraction(masse[i], radius[i], flux[i], age[i])
-            mcore = masse[i] * cmf
-            menv = masse[i] * (1.0 - cmf) 
-            d = dict(cmf=cmf, mcore=mcore, menv=menv)
+            _masse = masse[i]
+            _radius = radius[i]
+            _flux = flux[i]
+            _age = age[i]
+            _cmf = lopi.core_mass_fraction(_masse, _radius, _flux, _age)
+            _mcore = _masse * _cmf
+            _menv = _masse * (1.0 - _cmf) 
+            d = dict(cmf=_cmf, mcore=_mcore, menv=_menv)
         except ValueError:
             d = dict(cmf=np.nan, mcore=np.nan, menv=np.nan)            
         finally:
             df.append(d)
 
     df = pd.DataFrame(df)
-    print "{} samples fell outside grid".format(df.cmf.isnull().sum())
     return df
 
 def compute_ss_cmf(size=100):
@@ -149,12 +158,17 @@ def compute_ss_cmf(size=100):
     lopi = LopezInterpolator()
     i_count = 0
     for i, plnt in ss.iterrows():
+
         df = sample_ss_cmf(lopi, plnt, size=size)
+        nfailed = df.cmf.isnull().sum()
+        df = df.dropna()
         set_quantiles(ss, i, df.cmf, 'pl_cmf')
         set_quantiles(ss, i, df.mcore, 'pl_mcore')
         set_quantiles(ss, i, df.menv, 'pl_menv')
-        print i_count, i
         i_count+=1
+        print "{},{}: {} samples fell outside grid".format(
+            i_count, i, nfailed)
+
     ss.to_excel(sscmffn)
 
 

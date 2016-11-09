@@ -49,12 +49,14 @@ def augment_chain(chain, isochrones_file, lpar_list):
     model = StarModel.load_hdf(isochrones_file)
     chain_star = model.samples
     chain_star['agegyr'] = 10**chain_star['age'] / 1e9
-    chain_star = chain_star['Teff mass radius agegyr'.split()]
+    chain_star = chain_star['Teff mass radius agegyr distance'.split()]
     chain_star['rhostar'] = 1.410 * chain_star.mass * chain_star.radius**-3
     nchain = len(chain)
     chain_star = chain_star.sample(n=nchain,replace=True)
     chain_star.index = chain.index
     chain = pd.concat([chain_star,chain],axis=1)
+    if list(chain.columns).count('dvdt') > 0:
+        chain['dvdt'] *= 365 # Fitting is done in m/s/day, we want m/s/yr
 
     i_planet = 1 
     for lpar in lpar_list:
