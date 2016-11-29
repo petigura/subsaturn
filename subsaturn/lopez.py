@@ -121,15 +121,21 @@ def sample_ss_cmf(lopi, plnt, sample_age=False, age=5, size=100):
     """
     teq_earth = 279
     masse = gauss_samp(
-        plnt.pl_masse, plnt.pl_masseerr1, plnt.pl_masseerr2, size=size
+        plnt.pl_masse, plnt.pl_masseerr1, plnt.pl_masseerr2, size=size, seed=3
     )
     radius = gauss_samp(
-        plnt.pl_rade, plnt.pl_radeerr1, plnt.pl_radeerr2,size=size
+        plnt.pl_rade, plnt.pl_radeerr1, plnt.pl_radeerr2,size=size, seed=4,
     )
     teq = gauss_samp(
-        plnt.pl_teq, plnt.pl_teqerr1, plnt.pl_teqerr2,size=size
+        plnt.pl_teq, plnt.pl_teqerr1, plnt.pl_teqerr2,size=size,seed=5
     )
-    age = np.ones(size) * age
+    if sample_age:
+        age = gauss_samp(
+            plnt.st_age, plnt.st_ageerr1, plnt.st_ageerr2,size=size,seed=6
+        )
+    else:
+        age = np.ones(size) * age
+
     flux = (teq / teq_earth)**4.0
 
     df = []
@@ -151,7 +157,7 @@ def sample_ss_cmf(lopi, plnt, sample_age=False, age=5, size=100):
     df = pd.DataFrame(df)
     return df
 
-def compute_ss_cmf(size=100):
+def compute_ss_cmf(size=100, age=5,sample_age=False):
     ss = subsaturn.literature.load_ss()
 
     print "interpolating the Lopez grids using {} samples per planet".format(size)
@@ -159,7 +165,7 @@ def compute_ss_cmf(size=100):
     i_count = 0
     for i, plnt in ss.iterrows():
 
-        df = sample_ss_cmf(lopi, plnt, size=size)
+        df = sample_ss_cmf(lopi, plnt, size=size, age=age,sample_age=sample_age)
         nfailed = df.cmf.isnull().sum()
         df = df.dropna()
         set_quantiles(ss, i, df.cmf, 'pl_cmf')

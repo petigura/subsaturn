@@ -79,6 +79,7 @@ def load_ss(verbose=False):
     pl_dens pl_denserr1 pl_denserr2 
     pl_orbeccen pl_orbeccenerr1 pl_orbeccenerr2 pl_orbeccenlim 
     pl_teq pl_teqerr1 pl_teqerr2
+    st_age st_ageerr1 st_ageerr2
     pl_orbsmax 
     PL_DEF_REFLINK pl_massmeth latex_notes notes 
     include include_pl_orbeccen include_st_metfe
@@ -139,12 +140,18 @@ def set_quantiles(df, i, val, key):
     df.ix[i,key+'err2'] = np.percentile(val,15) - np.percentile(val,50)
 
 def df_to_rv_table(df, tablefn,):
+    s_notes = ""
     with open(tablefn, 'w') as f:
         f.write('% name radius mass density ecc teq cmf notes\n')
         df.pl_name = df.pl_name.replace('EPIC-211736671 b','EPIC-2117 b')
         for i, row in df.iterrows():
             s = row_to_string(row)
             f.write(s)
+
+            if row.latex_notes!="":
+                s_notes+="{}---{}; ".format(row.pl_name,row.latex_notes)
+
+    print s_notes
 
 def row_to_string(row):
     row['pl_cmfper'] = row['pl_cmf'] * 100 
@@ -168,7 +175,7 @@ def row_to_string(row):
         s+=r" & {st_metfe:.2f}"
     else:
         s+=r" & \nodata "
-    s+=r" & {latex_notes:s}"
+    #s+=r" & {latex_notes:s}"
     s+=r"\\"
     s = s.format(**row)
     s = s.replace('nan','')
