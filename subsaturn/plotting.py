@@ -15,6 +15,9 @@ ECC_THRESH = 0.1
 def read_ss():
     ss = pd.read_excel(subsaturn.lopez.sscmffn,index_col=0)
     ss = ss.rename(columns={'pl_name.1':'pl_name'})
+    ss['pl_fenv'] = 1 - ss['pl_cmf']
+    ss['pl_fenverr1'] = -1.0 * ss['pl_cmferr2']
+    ss['pl_fenverr2'] = -1.0 * ss['pl_cmferr1']
     ss = eccenbin(ss, ECC_THRESH)
     return ss 
 
