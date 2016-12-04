@@ -3,14 +3,22 @@ import matplotlib.patheffects as PathEffects # needed for Oreo font
 import seaborn as sns
 sns.set()
 sns.set(font='Helvetica')
+sns.set(font_scale=0.9)  
 sns.set_style("whitegrid")
 sns.set_color_codes()
+
+sns_cmap = sns.color_palette("husl", 8)
 import numpy as np
 import subsaturn.literature
 import subsaturn.lopez
 import pandas as pd
 
 ECC_THRESH = 0.1
+tex_cmf = '$M_{\mathregular{core}}$ /$M_{\mathregular{P}}$'
+tex_fenv = '$M_{\mathregular{env}}$ /$M_{\mathregular{P}}$'
+tex_mcore = '$M_{\mathregular{core}}$ (Earth-masses)'
+tex_menv = '$M_{\mathregular{env}}$ (Earth-masses)'
+tex_mp = '$M_{\mathregular{P}}$ (Earth-masses)'
 
 def read_ss():
     ss = pd.read_excel(subsaturn.lopez.sscmffn,index_col=0)
@@ -33,13 +41,15 @@ def errorbar_ecc(ss, xk, yk, xerr=None, yerr=None, **kwargs):
     ss_highecc = ss[ss.pl_highecc==True]
     ss_lowecc = ss[ss.pl_highecc==False]
     ss_nanecc = ss[ss.pl_highecc.isnull()]
-    labelL = ['e > 0.1', 'e < 0.1','e uncertain']
+    labelL = ['e > 0.1', 'e < 0.1','e uncert.']
     colorL = ['r', 'b','g']
+    markerL = ['D', 'o','s']
     ssL = [ss_highecc, ss_lowecc, ss_nanecc]
 
     for i in range(3):
         ss = ssL[i]
         label = labelL[i]
+        marker = markerL[i]
         ss = ssL[i]
         color = colorL[i]
 
@@ -55,7 +65,9 @@ def errorbar_ecc(ss, xk, yk, xerr=None, yerr=None, **kwargs):
             y = ss[yk]
             _yerr = None
 
-        errorbar(x, y, xerr=_xerr,yerr=_yerr,label=label,color=color, **kwargs)
+        errorbar(
+            x, y, xerr=_xerr,yerr=_yerr, label=label, color=color, capsize=0,
+            fmt=marker,markersize=4,elinewidth=1.2,**kwargs)
 
 def eccenbin(df, thresh):
     """
@@ -77,7 +89,6 @@ def eccenbin(df, thresh):
             df.ix[i,col] = True
     return df
 
-
 def format_st_metfe(func):
     """Format X-axis for metallicity"""
     def func_wrapper():
@@ -91,6 +102,9 @@ def format_teq(func):
     """Foramt X-axis for Teq"""
     def func_wrapper():
         func()
+        xt = [250,500,750,1000,1250,1500,1750,2000]
+        xticks(xt,xt)
+        ylim(xt[0],xt[-1])
         xlabel('Equilibrium Temp (K)')
         gcf().set_tight_layout(True)
     return func_wrapper
@@ -113,7 +127,36 @@ def format_cmf(func):
         gcf().set_tight_layout(True)
     return func_wrapper
 
+def format_fenv(func):
+    """Format Y-axis for core mass fraction"""
+    def func_wrapper():
+        func()
+        ylabel(tex_fenv)
+        ylim(0,1)
+        gcf().set_tight_layout(True)
+    return func_wrapper
+
 def format_masse(func):
+    """Format Y-axis for mass"""
+    def func_wrapper():
+        func()
+        yt = [3,10,30,100]
+        yticks(yt,yt)
+        ylim(yt[0],yt[-1])
+        gcf().set_tight_layout(True)
+    return func_wrapper
+
+def format_mcore(func):
+    """Format Y-axis for mass"""
+    def func_wrapper():
+        func()
+        yt = [0.3,1,3,10,30,100]
+        yticks(yt,yt)
+        ylim(yt[0],yt[-1])
+        gcf().set_tight_layout(True)
+    return func_wrapper
+
+def format_menv(func):
     """Format Y-axis for mass"""
     def func_wrapper():
         func()
@@ -147,12 +190,12 @@ def plot_ttv_rv_teq(df, xk, yk, mode='rp-rho', fig0=None, ax0=None,
             - x
             - y 
     """
-    rc('font',size=10)
+    rc('font',size=8)
     zerrorbar = 5
     ztext = 5.5
     zpoints = 6
     size = 100
-    vmin = 300 # must define hard limits for the color scale
+    vmin = 200 # must define hard limits for the color scale
     vmax = 1800 
 
     # Provision Figure
@@ -178,7 +221,7 @@ def plot_ttv_rv_teq(df, xk, yk, mode='rp-rho', fig0=None, ax0=None,
     # Plot error bar (no symbols)
     errorbar(
         x, y, yerr=yerr, xerr=xerr, fmt='.', zorder=zerrorbar, mew=0, lw=1, 
-        color='0.4'
+        color='0.4', label=None
     )
 
     marker_dict = {'RV':'^','TTV':'v','RV+TTV':'d'}
@@ -189,8 +232,10 @@ def plot_ttv_rv_teq(df, xk, yk, mode='rp-rho', fig0=None, ax0=None,
         _x = x.ix[idx]
         _y = y.ix[idx]
         _c = df.ix[idx,'pl_teq']
+#        cmap=sns_cmap
+        cmap=cm.rainbow
         col = scatter(
-            _x, _y, c=_c, linewidth=1, cmap=cm.nipy_spectral,  
+            _x, _y, c=_c, linewidth=1,cmap=cmap ,
             vmin=vmin, vmax=vmax, marker=marker, zorder=zpoints, label=meth,
             **scat_kw
         )
@@ -216,14 +261,15 @@ def plot_ttv_rv_teq(df, xk, yk, mode='rp-rho', fig0=None, ax0=None,
 
     if (fig0 is None) and (mode=='mp-rp') :
 #        cbar = colorbar(fraction=0.03)
-        semilogx()
+        loglog()
         xlabel('Planet Mass (Earth-masses)')
         ylabel('Planet Radii (Earth-radii)')
         grid(which='minor')#,linestyle=':',linewidth=0.5,alpha=0.5)
         fig.subplots_adjust(right=right)
-        xt = [1,3,10,30,100,300]
+        xt = [1,3,10,30,100,300,1000,3000]
         xticks(xt,xt)
-        xlim(1,300)
+        yt = [1,2,3,4,6,8,10,20]
+        yticks(yt,yt)
         cax = fig.add_axes(cax_pos) # setup colorbar axes. 
         cbar = colorbar(cax=cax)
         cbar.set_label('Equilibrium Temp (K)')
@@ -231,10 +277,10 @@ def plot_ttv_rv_teq(df, xk, yk, mode='rp-rho', fig0=None, ax0=None,
 
     return fig, ax
 
-def subsat2_rp_rhop(label_all=False):
+def subsat2_rp_rhop(label_all=False,zoom=False):
     ss = subsaturn.literature.load_ss()
-    ss['x_offset'] = 5
-    ss['y_offset'] = 5
+    ss['x_offset'] = 3
+    ss['y_offset'] = 3
     ss['pl_name'] = ss.pl_name.replace('EPIC-211736671 b','EPIC-2117 b')
     ss.index = ss.pl_name
     b_thiswork = ss.pl_name.str.contains('K2-39|K2-27|K2-32|EPIC-2117')
@@ -245,23 +291,41 @@ def subsat2_rp_rhop(label_all=False):
     if label_all:
         all_fontsize = 10
 
+    thiswork_fs = 0 
+    if zoom:
+        thiswork_fs = 8
+
+
     fig,ax = plot_ttv_rv_teq(
         ss_lit, 'pl_rade', 'pl_dens', 
         ann_kw=dict(fontsize=all_fontsize),
-        scat_kw=dict(s=100)
+        scat_kw=dict(s=70)
     )
     ax.legend(bbox_to_anchor=(1.03, 1), loc=2, borderaxespad=0.)
 
     plot_ttv_rv_teq(
         ss_thiswork, 'pl_rade', 'pl_dens', fig0=fig,ax0=ax,
-        ann_kw=dict(fontsize=10,fontweight='bold'),
-        scat_kw=dict(s=200)
+        ann_kw=dict(fontsize=thiswork_fs,fontweight='bold'),
+        scat_kw=dict(s=70)
     )
 
-def subsat2_mp_rp(label_all=False):
+    #nonss = subsaturn.literature.load_nonss()
+    #nonss.index = np.arange(len(nonss))
+    #nonss.to_csv('test.csv',index=True)
+    nonss = pd.read_csv('test.csv',index_col=0)
+    nonss.index = nonss.pl_name
+    plot(nonss.pl_rade, nonss.pl_dens,'.',color='gray',label=None)
+    xlim(1,20)
+    ylim(0.1,4)
+    if zoom:
+        ylim(0.05,6)
+        xlim(3.5,8.5)
+
+
+def subsat2_mp_rp(label_all=False,zoom=False):
     ss = subsaturn.literature.load_ss()
-    ss['x_offset'] = 5
-    ss['y_offset'] = 5
+    ss['x_offset'] = -3
+    ss['y_offset'] = 3
     ss['pl_name'] = ss.pl_name.replace('EPIC-211736671 b','EPIC-2117 b')
     ss.index = ss.pl_name
     b_thiswork = ss.pl_name.str.contains('K2-39|K2-27|K2-32|EPIC-2117')
@@ -272,52 +336,65 @@ def subsat2_mp_rp(label_all=False):
     if label_all:
         all_fontsize = 10
 
+    thiswork_fs = 0 
+    if zoom:
+        thiswork_fs = 8
+
     fig,ax = plot_ttv_rv_teq(
         ss_lit, 'pl_masse', 'pl_rade', mode='mp-rp',
-        ann_kw=dict(fontsize=all_fontsize),
-        scat_kw=dict(s=100)
+        ann_kw=dict(fontsize=all_fontsize, ),
+        scat_kw=dict(s=70)
     )
     ax.legend(bbox_to_anchor=(1.03, 1), loc=2, borderaxespad=0.)
 
     plot_ttv_rv_teq(
         ss_thiswork, 'pl_masse', 'pl_rade', mode='mp-rp',fig0=fig,ax0=ax,
-        ann_kw=dict(fontsize=10,fontweight='bold'),
-        scat_kw=dict(s=200)
+        ann_kw=dict(fontsize=thiswork_fs,fontweight='bold',ha='right'),
+        scat_kw=dict(s=70)
     )
 
-tex_cmf = '$M_{\mathregular{core}}$ /$M_{\mathregular{P}}$'
-tex_mcore = '$M_{\mathregular{core}}$ (Earth-masses)'
-tex_menv = '$M_{\mathregular{env}}$ (Earth-masses)'
-tex_mp = '$M_{\mathregular{P}}$ (Earth-masses)'
+    nonss = subsaturn.literature.load_nonss()
+    nonss.index = np.arange(len(nonss))
+    nonss.to_csv('test.csv',index=True)
+    nonss = pd.read_csv('test.csv',index_col=0)
+    nonss.index = nonss.pl_name
+    plot(nonss.pl_masse, nonss.pl_rade,'.',color='gray',label=None)
+    xlim(1,3000)
+    ylim(1,30)
+    if zoom:
+        xlim(3,100)
+        yt = [1,2,3,4,5,6,7,8,9,10,20]
+        yticks(yt,yt)
+        ylim(3.5,9)
 
-@format_cmf
+@format_fenv
 @format_teq
-def subsat2_teq_cmf():
+def subsat2_teq_fenv():
     ss = read_ss()
-    errorbar_ecc(ss, 'pl_teq', 'pl_cmf', xerr=True, yerr=True,fmt='.')    
+    errorbar_ecc(ss, 'pl_teq', 'pl_fenv', xerr=True, yerr=True)    
 
 @format_masse
 @format_teq
 def subsat2_teq_mp():
     ss = read_ss()
     semilogy()
-    errorbar_ecc(ss, 'pl_teq', 'pl_masse', xerr=True, yerr=True,fmt='.')    
+    errorbar_ecc(ss, 'pl_teq', 'pl_masse', xerr=True, yerr=True,)    
     ylabel(tex_mp)
 
-@format_masse
+@format_mcore
 @format_teq
 def subsat2_teq_menv():
     ss = read_ss()
     semilogy()
-    errorbar_ecc(ss, 'pl_teq', 'pl_menv', xerr=True, yerr=True,fmt='.')    
+    errorbar_ecc(ss, 'pl_teq', 'pl_menv', xerr=True, yerr=True,)    
     ylabel(tex_menv)
 
-@format_masse
+@format_mcore
 @format_teq
 def subsat2_teq_mcore():
     ss = read_ss()
     semilogy()
-    errorbar_ecc(ss, 'pl_teq', 'pl_mcore', xerr=True, yerr=True,fmt='.')    
+    errorbar_ecc(ss, 'pl_teq', 'pl_mcore', xerr=True, yerr=True,)    
     ylabel(tex_mcore)
 
 @format_masse
@@ -325,31 +402,30 @@ def subsat2_teq_mcore():
 def subsat2_pnum_mp():
     ss = read_ss()
     semilogy()
-    errorbar_pnum(ss, 'pl_masse', fmt='.')    
+    errorbar_pnum(ss, 'pl_masse', )    
     ylabel(tex_mp)
-    legend(loc='lower left')
 
-@format_cmf
+@format_fenv
 @format_pnum
-def subsat2_pnum_cmf():
+def subsat2_pnum_fenv():
     ss = read_ss()
-    errorbar_pnum(ss, 'pl_cmf', fmt='.')    
-    ylabel(tex_cmf)
+    errorbar_pnum(ss, 'pl_fenv', )    
+    ylabel(tex_fenv)
 
-@format_masse
+@format_mcore
 @format_pnum
 def subsat2_pnum_mcore():
     ss = read_ss()
     semilogy()
-    errorbar_pnum(ss, 'pl_mcore', fmt='.')    
+    errorbar_pnum(ss, 'pl_mcore', )    
     ylabel(tex_mcore)
 
-@format_masse
+@format_mcore
 @format_pnum
 def subsat2_pnum_menv():
     ss = read_ss()
     semilogy()
-    errorbar_pnum(ss, 'pl_menv', fmt='.')    
+    errorbar_pnum(ss, 'pl_menv', )    
     ylabel(tex_menv)
     
 @format_masse
@@ -358,37 +434,68 @@ def subsat2_st_metfe_pl_mp():
     ss = read_ss()
     ss = ss.drop(['Kepler-413 b','GJ 436 b'])
     semilogy()
-    errorbar_ecc(ss, 'st_metfe', 'pl_masse', xerr=True, yerr=True,fmt='.')    
+    errorbar_ecc(ss, 'st_metfe', 'pl_masse', xerr=True, yerr=True,)    
     ylabel(tex_mp)
     gcf().set_tight_layout(True)
 
-@format_masse
+@format_mcore
 @format_st_metfe
 def subsat2_st_metfe_pl_mcore():
     ss = read_ss()
     ss = ss.drop(['Kepler-413 b','GJ 436 b'])
     semilogy()
-    errorbar_ecc(ss, 'st_metfe', 'pl_mcore', xerr=True, yerr=True,fmt='.')    
+    errorbar_ecc(ss, 'st_metfe', 'pl_mcore', xerr=True, yerr=True,)    
     ylabel(tex_mcore)
     yt = [1,3,10,30,100]
     yticks(yt,yt)
     xlim(-0.3,0.5)
     gcf().set_tight_layout(True)
 
-@format_masse
+@format_mcore
 @format_st_metfe
 def subsat2_st_metfe_pl_menv():
     ss = read_ss()
     ss = ss.drop(['Kepler-413 b','GJ 436 b'])
     semilogy()
-    errorbar_ecc(ss, 'st_metfe', 'pl_menv', xerr=True, yerr=True,fmt='.')    
+    errorbar_ecc(ss, 'st_metfe', 'pl_menv', xerr=True, yerr=True,)    
     ylabel(tex_menv)
 
-@format_cmf
+@format_fenv
 @format_st_metfe
-def subsat2_st_metfe_pl_cmf():
+def subsat2_st_metfe_pl_fenv():
     ss = read_ss()
     ss = ss.drop(['Kepler-413 b','GJ 436 b'])
-    errorbar_ecc(ss, 'st_metfe', 'pl_cmf', xerr=True, yerr=True,fmt='.')    
-    ylabel(tex_cmf)
+    errorbar_ecc(ss, 'st_metfe', 'pl_fenv', xerr=True, yerr=True,)    
+    ylabel(tex_fenv)
     gcf().set_tight_layout(True)
+
+def subsat2_st_metfe():
+    fig, axL = subplots(sharex=False,ncols=2,nrows=2,figsize=(7,6))
+    axL = axL.flatten()
+    sca(axL[0]);subsaturn.plotting.subsat2_st_metfe_pl_mp()
+    sca(axL[1]);subsaturn.plotting.subsat2_st_metfe_pl_fenv()
+    legend(loc='upper left')
+    sca(axL[2]);subsaturn.plotting.subsat2_st_metfe_pl_mcore()
+    sca(axL[3]);subsaturn.plotting.subsat2_st_metfe_pl_menv()
+
+def subsat2_pl_teq():
+    fig, axL = subplots(sharex=False,ncols=2,nrows=2,figsize=(7,6))
+    axL = axL.flatten()
+    sca(axL[0]);subsaturn.plotting.subsat2_teq_mp()
+    sca(axL[1]);subsaturn.plotting.subsat2_teq_fenv()
+    legend(loc='upper right')
+    sca(axL[2]);subsaturn.plotting.subsat2_teq_mcore()
+    sca(axL[3]);subsaturn.plotting.subsat2_teq_menv()
+    setp(axL,xlim=(250,2000))
+
+
+def subsat2_pl_pnum():
+    fig, axL = subplots(sharex=False,ncols=2,nrows=2,figsize=(7,6))
+    axL = axL.flatten()
+
+    sca(axL[0]);subsaturn.plotting.subsat2_pnum_mp()
+    sca(axL[1]);subsaturn.plotting.subsat2_pnum_fenv()
+    legend(loc='upper right')
+
+    sca(axL[2]);subsaturn.plotting.subsat2_pnum_mcore()
+    sca(axL[3]);subsaturn.plotting.subsat2_pnum_menv()
