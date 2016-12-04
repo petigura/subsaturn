@@ -124,18 +124,32 @@ def sample_ss_cmf(lopi, plnt, sample_age=False, age=5, size=100):
         plnt.pl_masse, plnt.pl_masseerr1, plnt.pl_masseerr2, size=size, seed=3
     )
     radius = gauss_samp(
-        plnt.pl_rade, plnt.pl_radeerr1, plnt.pl_radeerr2,size=size, seed=4,
+        plnt.pl_rade, plnt.pl_radeerr1, plnt.pl_radeerr2, size=size, seed=4,
     )
     teq = gauss_samp(
-        plnt.pl_teq, plnt.pl_teqerr1, plnt.pl_teqerr2,size=size,seed=5
+        plnt.pl_teq, plnt.pl_teqerr1, plnt.pl_teqerr2, size=size,seed=5
     )
     if sample_age:
-        age = gauss_samp(
-            plnt.st_age, plnt.st_ageerr1, plnt.st_ageerr2,size=size,seed=6
-        )
+        age = np.array([])
+        i = 0 
+        while True:
+            _age = gauss_samp(
+                plnt.st_age, plnt.st_ageerr1, plnt.st_ageerr2, size=size,seed=6
+            )
+            age = age[(age > 0) & (age < 13)]
+            age = np.hstack([age,_age])
+            if len(age) > size:
+                age = age[:size]
+                break
+
+            i +=1
+            if i==10:
+                print "problem"
+            
     else:
         age = np.ones(size) * age
 
+    print age
     flux = (teq / teq_earth)**4.0
 
     df = []
